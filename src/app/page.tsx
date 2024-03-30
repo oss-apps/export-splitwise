@@ -105,6 +105,17 @@ export default function Home() {
           </li>
         </ol>
       </div>
+      <div className="text-xl">
+        We don&apos;t store your data or api keys. It&apos;s only used to export
+        data from Splitwise. You can check the code on{" "}
+        <a
+          href="https://github.com/oss-apps/export-splitwise"
+          target="_blank"
+          className="text-green-400"
+        >
+          GitHub
+        </a>
+      </div>
     </main>
   );
 }
