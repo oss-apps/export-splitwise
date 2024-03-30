@@ -47,8 +47,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center gap-8 p-4 lg:p-24 mt-10">
       <h1 className="text-2xl text-center">
-        Export data from <span className="text-green-400">Splitwise</span> to
-        JSON
+        Export data from <span className="text-green-400">Splitwise</span>
       </h1>
       <div className="flex flex-col justify-center gap-8">
         <input
