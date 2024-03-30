@@ -89,6 +89,10 @@ export default function Home() {
             &quot;Export data from Splitwise&quot;
           </li>
           <li>
+            Enter <span className="text-green-400">Homepage URL</span> as
+            &quot;https://www.splitwise.com/&quot;
+          </li>
+          <li>
             Accept terms and click{" "}
             <span className="text-green-400">Register and get API key</span>
           </li>
