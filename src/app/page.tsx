@@ -28,21 +28,33 @@ export default function Home() {
 
     if (response.status === 200) {
       const data = await response.json();
-      console.log(data);
+      // Generate current date and time in YYYY-MM-DD_HH-MM-SS format
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const hours = String(today.getHours()).padStart(2, '0');
+      const minutes = String(today.getMinutes()).padStart(2, '0');
+      const seconds = String(today.getSeconds()).padStart(2, '0');
+      const formattedDateTime = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+    
+      // Create the filename with the current date and time
+      const filename = `splitwise_data_${formattedDateTime}.json`;
+    
       const dataStr =
         "data:text/json;charset=utf-8," +
         encodeURIComponent(JSON.stringify(data));
       const downloadAnchorNode = document.createElement("a");
       downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", "splitwise_data.json");
-      document.body.appendChild(downloadAnchorNode); // required for firefox
+      downloadAnchorNode.setAttribute("download", filename);
+      document.body.appendChild(downloadAnchorNode); // Required for Firefox
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
     } else {
       setError("Failed to fetch data. Please try again.");
       console.log("Error fetching data");
     }
-  }
+
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-8 p-4 lg:p-24 mt-10">
