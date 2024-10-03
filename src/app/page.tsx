@@ -28,6 +28,7 @@ export default function Home() {
 
     if (response.status === 200) {
       const data = await response.json();
+
       // Generate current date and time in YYYY-MM-DD_HH-MM-SS format
       const today = new Date();
       const year = today.getFullYear();
@@ -54,7 +55,7 @@ export default function Home() {
       setError("Failed to fetch data. Please try again.");
       console.log("Error fetching data");
     }
-
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-8 p-4 lg:p-24 mt-10">
