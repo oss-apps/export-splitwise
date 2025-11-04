@@ -32,8 +32,44 @@ export async function POST(req: Request) {
     );
   }
 
+  let offset = 0;
+  const limit = 1000;
+  const expenses = [];
+  while (true) {
+    const expense_response = await fetch(
+      `${SPLITWISE_API_URL}/get_expenses?offset=${offset}&limit=${limit}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+      }
+    );
+
+    if (!expense_response.ok) {
+      return Response.json(
+        { error: "Error in getting expenses" },
+        { status: expense_response.status }
+      );
+    }
+
+    let expenses_json = await expense_response.json();
+    if (expenses_json.expenses.length === 0) {
+      break;
+    }
+
+    expenses.push(...expenses_json.expenses);
+
+    if (expenses_json.expenses.length < limit) {
+      break;
+    }
+
+    offset += limit;
+  }
+
   return Response.json({
     friends: (await friend_response.json()).friends,
     groups: (await group_response.json()).groups,
+    expenses,
   });
 }
