@@ -1,6 +1,46 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Export Splitwise data
 
-## Getting Started
+Downloads your Splitwise friends, groups and expenses as one JSON file, using your own Splitwise API key. SplitPro's importer reads this file.
+
+## File format
+
+```jsonc
+{
+  "version": 2,
+  "exportedAt": "2024-01-01T00:00:00.000Z",
+  "currentUser": {}, // get_current_user
+  "friends": [],     // get_friends, unchanged from version 1
+  "groups": [],      // get_groups, unchanged from version 1
+  "expenses": []     // get_expenses, every page, deleted expenses included (deleted_at is set)
+}
+```
+
+Files without `version` are version 1 and only have `friends` and `groups`.
+
+`get_expenses` is documented as "the current user's expenses". So that a group's history also has expenses you aren't part of, each group is listed again with `group_id`, and expenses are de-duplicated by id.
+
+The browser drives the paging: each call to `/api/download` fetches one resource or one page of 500 expenses, so long histories don't run into the hosting time limit. The API key is only sent to Splitwise; it isn't stored or logged.
+
+Splitwise may require a Splitwise Pro subscription to use its API. A rejected key (401 or 403) shows a message saying so.
+
+## Tests
+
+```bash
+pnpm test
+```
+
+The tests mock `fetch`, so they don't need a Splitwise account.
+
+To try the whole page without one, run the mock Splitwise API and point the app at it:
+
+```bash
+node scripts/mock-splitwise.mjs            # serves an example account on port 4010
+SPLITWISE_API_URL=http://localhost:4010/api/v3.0 pnpm dev
+```
+
+Then enter the API key `test-key` and download. Any other key gets a 401. Pass a JSON file with `{ currentUser, friends, groups, expenses }` to serve your own data.
+
+## Development
 
 First, run the development server:
 

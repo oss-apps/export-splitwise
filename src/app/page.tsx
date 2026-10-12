@@ -1,12 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
-import { SPLITWISE_API_URL } from "~/constant";
+import { ExportError, exportSplitwise, type Progress } from "~/lib/export";
+
+const getFileName = () => {
+  // Current date and time in YYYY-MM-DD_HH-MM-SS format
+  const today = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const date = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  const time = `${pad(today.getHours())}-${pad(today.getMinutes())}-${pad(today.getSeconds())}`;
+  return `splitwise_data_${date}_${time}.json`;
+};
 
 export default function Home() {
   const [apiKey, setApiKey] = useState("");
   const [loadingData, setLoadingData] = useState(false);
+  const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState("");
 
   async function downloadData() {
@@ -16,44 +25,37 @@ export default function Home() {
     }
     setLoadingData(true);
     setError(""); // Reset error state before attempting to fetch
-    const response = await fetch(`/api/download`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ apiKey }),
-    });
+    setProgress(null);
 
-    setLoadingData(false); // Ensure loading state is reset whether fetch is successful or not
+    try {
+      const data = await exportSplitwise(async (request) => {
+        const response = await fetch(`/api/download`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ apiKey, ...request }),
+        });
+        return { status: response.status, body: await response.json().catch(() => null) };
+      }, setProgress);
 
-    if (response.status === 200) {
-      const data = await response.json();
-
-      // Generate current date and time in YYYY-MM-DD_HH-MM-SS format
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const hours = String(today.getHours()).padStart(2, '0');
-      const minutes = String(today.getMinutes()).padStart(2, '0');
-      const seconds = String(today.getSeconds()).padStart(2, '0');
-      const formattedDateTime = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
-    
-      // Create the filename with the current date and time
-      const filename = `splitwise_data_${formattedDateTime}.json`;
-    
-      const dataStr =
-        "data:text/json;charset=utf-8," +
-        encodeURIComponent(JSON.stringify(data));
+      // A blob URL handles large exports that a data URL can't.
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data)], { type: "application/json" })
+      );
       const downloadAnchorNode = document.createElement("a");
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", filename);
+      downloadAnchorNode.setAttribute("href", url);
+      downloadAnchorNode.setAttribute("download", getFileName());
       document.body.appendChild(downloadAnchorNode); // Required for Firefox
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
-    } else {
-      setError("Failed to fetch data. Please try again.");
-      console.log("Error fetching data");
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (e) {
+      setError(
+        e instanceof ExportError ? e.message : "Failed to fetch data. Please try again."
+      );
+    } finally {
+      setLoadingData(false); // Ensure loading state is reset whether fetch is successful or not
     }
   }
 
@@ -77,8 +79,22 @@ export default function Home() {
         >
           {loadingData ? "Downloading..." : "Download Data"}
         </button>
-        {error && <p className="text-red-500 text-center">{error}</p>}
+        {loadingData && progress ? (
+          <p className="text-gray-400 text-center" aria-live="polite">
+            {progress.step}… {progress.expenses} expenses so far
+          </p>
+        ) : null}
+        {error && (
+          <p className="text-red-500 text-center max-w-[400px]" role="alert">
+            {error}
+          </p>
+        )}
       </div>
+
+      <p className="text-gray-400 text-center text-sm max-w-[500px]">
+        The file has your friends, groups and every expense, including deleted
+        ones. Long histories can take a minute.
+      </p>
 
       <div className="flex flex-col gap-4 bg-slate-900 p-4 w-full lg:max-w-[500px] rounded-md">
         <div className="">How to get API key</div>
